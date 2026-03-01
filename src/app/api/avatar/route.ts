@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir, readFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { getSiteData, saveSiteData } from "@/lib/store";
 import { authenticateRequest } from "@/lib/auth";
@@ -66,30 +66,5 @@ export async function POST(request: Request) {
       { error: "Failed to upload avatar" },
       { status: 500 }
     );
-  }
-}
-
-// GET: Serve the avatar image
-export async function GET() {
-  try {
-    const extensions = ["jpg", "png", "webp"];
-    for (const ext of extensions) {
-      try {
-        const filePath = path.join(AVATAR_DIR, `avatar.${ext}`);
-        const data = await readFile(filePath);
-        const contentType = ext === "jpg" ? "image/jpeg" : `image/${ext}`;
-        return new NextResponse(data, {
-          headers: {
-            "Content-Type": contentType,
-            "Cache-Control": "public, max-age=3600",
-          },
-        });
-      } catch {
-        continue;
-      }
-    }
-    return new NextResponse(null, { status: 404 });
-  } catch {
-    return new NextResponse(null, { status: 500 });
   }
 }
