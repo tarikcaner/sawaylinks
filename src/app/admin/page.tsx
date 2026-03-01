@@ -23,6 +23,24 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface LinkItem {
   id: string;
@@ -32,6 +50,268 @@ interface LinkItem {
   category?: string;
   isPinned?: boolean;
   order: number;
+}
+
+interface SortableLinkCardProps {
+  link: LinkItem;
+  index: number;
+  linksCount: number;
+  editingId: string | null;
+  editTitle: string;
+  editUrl: string;
+  editCategory: string;
+  editPinned: boolean;
+  deletingId: string | null;
+  onMoveLink: (index: number, direction: "up" | "down") => void;
+  onStartEdit: (link: LinkItem) => void;
+  onCancelEdit: () => void;
+  onSaveEdit: (id: string) => void;
+  onTogglePin: (link: LinkItem) => void;
+  onDeleteLink: (id: string) => void;
+  onSetDeletingId: (id: string | null) => void;
+  onSetEditTitle: (val: string) => void;
+  onSetEditUrl: (val: string) => void;
+  onSetEditCategory: (val: string) => void;
+  onSetEditPinned: (val: boolean) => void;
+  categoryLabel: (cat?: string) => string;
+}
+
+function SortableLinkCard({
+  link,
+  index,
+  linksCount,
+  editingId,
+  editTitle,
+  editUrl,
+  editCategory,
+  editPinned,
+  deletingId,
+  onMoveLink,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onTogglePin,
+  onDeleteLink,
+  onSetDeletingId,
+  onSetEditTitle,
+  onSetEditUrl,
+  onSetEditCategory,
+  onSetEditPinned,
+  categoryLabel,
+}: SortableLinkCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: link.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : ("auto" as const),
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card
+        className={`py-0 transition-colors hover:border-ring/50 ${isDragging ? "shadow-lg border-primary/50" : ""}`}
+      >
+        <CardContent className="p-3">
+          {editingId === link.id ? (
+            /* Edit mode */
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => onSetEditTitle(e.target.value)}
+                  placeholder="Baslik"
+                />
+                <Input
+                  type="url"
+                  value={editUrl}
+                  onChange={(e) => onSetEditUrl(e.target.value)}
+                  placeholder="URL"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <select
+                  value={editCategory}
+                  onChange={(e) => onSetEditCategory(e.target.value)}
+                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] dark:bg-input/30"
+                >
+                  <option value="social">Sosyal Medya</option>
+                  <option value="shop">Magaza</option>
+                  <option value="other">Diger</option>
+                </select>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id={`edit-pinned-${link.id}`}
+                    checked={editPinned}
+                    onCheckedChange={onSetEditPinned}
+                  />
+                  <Label
+                    htmlFor={`edit-pinned-${link.id}`}
+                    className="cursor-pointer"
+                  >
+                    Sabitlensin
+                  </Label>
+                </div>
+              </div>
+              <Separator />
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onCancelEdit}
+                >
+                  <X className="size-4" />
+                  Vazgec
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => onSaveEdit(link.id)}
+                >
+                  <Check className="size-4" />
+                  Kaydet
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* Display mode */
+            <div className="flex items-center gap-3">
+              {/* Grip (drag handle) + Reorder */}
+              <div className="flex items-center gap-0.5 shrink-0">
+                <button
+                  {...attributes}
+                  {...listeners}
+                  className="cursor-grab active:cursor-grabbing touch-none p-0.5 rounded hover:bg-muted"
+                  aria-label="Surukle"
+                >
+                  <GripVertical className="size-4 text-muted-foreground/50" />
+                </button>
+                <div className="flex flex-col -space-y-0.5">
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => onMoveLink(index, "up")}
+                    disabled={index === 0}
+                    title="Yukari tasi"
+                  >
+                    <ChevronUp className="size-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => onMoveLink(index, "down")}
+                    disabled={index === linksCount - 1}
+                    title="Asagi tasi"
+                  >
+                    <ChevronDown className="size-3" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Link info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium text-sm truncate">
+                    {link.title}
+                  </h3>
+                  {link.isPinned && (
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] px-1.5 py-0"
+                    >
+                      <Pin className="size-2.5" />
+                      Sabit
+                    </Badge>
+                  )}
+                  {link.category && (
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] px-1.5 py-0"
+                    >
+                      {categoryLabel(link.category)}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <ExternalLink className="size-3 text-muted-foreground shrink-0" />
+                  <p className="text-xs text-muted-foreground truncate">
+                    {link.url}
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-0.5 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => onTogglePin(link)}
+                  title={
+                    link.isPinned ? "Sabitlemeyi kaldir" : "Sabitle"
+                  }
+                  className={
+                    link.isPinned
+                      ? "text-primary hover:text-primary"
+                      : ""
+                  }
+                >
+                  <Pin
+                    className="size-3.5"
+                    fill={link.isPinned ? "currentColor" : "none"}
+                  />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => onStartEdit(link)}
+                  title="Duzenle"
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+
+                {deletingId === link.id ? (
+                  <div className="flex items-center gap-1 ml-1">
+                    <Button
+                      variant="destructive"
+                      size="xs"
+                      onClick={() => onDeleteLink(link.id)}
+                    >
+                      Sil
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => onSetDeletingId(null)}
+                    >
+                      Iptal
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => onSetDeletingId(link.id)}
+                    title="Sil"
+                    className="hover:text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 export default function AdminLinksPage() {
@@ -56,6 +336,19 @@ export default function AdminLinksPage() {
 
   // Delete confirmation
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Drag-and-drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const fetchLinks = useCallback(async () => {
     try {
@@ -201,6 +494,29 @@ export default function AdminLinksPage() {
     }
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = links.findIndex((l) => l.id === active.id);
+    const newIndex = links.findIndex((l) => l.id === over.id);
+
+    const newLinks = arrayMove(links, oldIndex, newIndex);
+    setLinks(newLinks);
+
+    const ids = newLinks.map((l) => l.id);
+    try {
+      await authFetch("/api/links/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+    } catch {
+      toast.error("Siralama guncellenemedi.");
+      await fetchLinks();
+    }
+  };
+
   const categoryLabel = (cat?: string) => {
     switch (cat) {
       case "social":
@@ -330,195 +646,43 @@ export default function AdminLinksPage() {
           </div>
         )}
 
-        {links.map((link, index) => (
-          <Card
-            key={link.id}
-            className="py-0 transition-colors hover:border-ring/50"
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={links.map((l) => l.id)}
+            strategy={verticalListSortingStrategy}
           >
-            <CardContent className="p-3">
-              {editingId === link.id ? (
-                /* Edit mode */
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Input
-                      type="text"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      placeholder="Baslik"
-                    />
-                    <Input
-                      type="url"
-                      value={editUrl}
-                      onChange={(e) => setEditUrl(e.target.value)}
-                      placeholder="URL"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <select
-                      value={editCategory}
-                      onChange={(e) => setEditCategory(e.target.value)}
-                      className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] dark:bg-input/30"
-                    >
-                      <option value="social">Sosyal Medya</option>
-                      <option value="shop">Magaza</option>
-                      <option value="other">Diger</option>
-                    </select>
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        id={`edit-pinned-${link.id}`}
-                        checked={editPinned}
-                        onCheckedChange={setEditPinned}
-                      />
-                      <Label
-                        htmlFor={`edit-pinned-${link.id}`}
-                        className="cursor-pointer"
-                      >
-                        Sabitlensin
-                      </Label>
-                    </div>
-                  </div>
-                  <Separator />
-                  <div className="flex gap-2 justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={cancelEdit}
-                    >
-                      <X className="size-4" />
-                      Vazgec
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => saveEdit(link.id)}
-                    >
-                      <Check className="size-4" />
-                      Kaydet
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                /* Display mode */
-                <div className="flex items-center gap-3">
-                  {/* Grip + Reorder */}
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    <GripVertical className="size-4 text-muted-foreground/50" />
-                    <div className="flex flex-col -space-y-0.5">
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => moveLink(index, "up")}
-                        disabled={index === 0}
-                        title="Yukari tasi"
-                      >
-                        <ChevronUp className="size-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => moveLink(index, "down")}
-                        disabled={index === links.length - 1}
-                        title="Asagi tasi"
-                      >
-                        <ChevronDown className="size-3" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Link info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-sm truncate">
-                        {link.title}
-                      </h3>
-                      {link.isPinned && (
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] px-1.5 py-0"
-                        >
-                          <Pin className="size-2.5" />
-                          Sabit
-                        </Badge>
-                      )}
-                      {link.category && (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] px-1.5 py-0"
-                        >
-                          {categoryLabel(link.category)}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <ExternalLink className="size-3 text-muted-foreground shrink-0" />
-                      <p className="text-xs text-muted-foreground truncate">
-                        {link.url}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={() => togglePin(link)}
-                      title={
-                        link.isPinned ? "Sabitlemeyi kaldir" : "Sabitle"
-                      }
-                      className={
-                        link.isPinned
-                          ? "text-primary hover:text-primary"
-                          : ""
-                      }
-                    >
-                      <Pin
-                        className="size-3.5"
-                        fill={link.isPinned ? "currentColor" : "none"}
-                      />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={() => startEdit(link)}
-                      title="Duzenle"
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-
-                    {deletingId === link.id ? (
-                      <div className="flex items-center gap-1 ml-1">
-                        <Button
-                          variant="destructive"
-                          size="xs"
-                          onClick={() => deleteLink(link.id)}
-                        >
-                          Sil
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          onClick={() => setDeletingId(null)}
-                        >
-                          Iptal
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => setDeletingId(link.id)}
-                        title="Sil"
-                        className="hover:text-destructive"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+            {links.map((link, index) => (
+              <SortableLinkCard
+                key={link.id}
+                link={link}
+                index={index}
+                linksCount={links.length}
+                editingId={editingId}
+                editTitle={editTitle}
+                editUrl={editUrl}
+                editCategory={editCategory}
+                editPinned={editPinned}
+                deletingId={deletingId}
+                onMoveLink={moveLink}
+                onStartEdit={startEdit}
+                onCancelEdit={cancelEdit}
+                onSaveEdit={saveEdit}
+                onTogglePin={togglePin}
+                onDeleteLink={deleteLink}
+                onSetDeletingId={setDeletingId}
+                onSetEditTitle={setEditTitle}
+                onSetEditUrl={setEditUrl}
+                onSetEditCategory={setEditCategory}
+                onSetEditPinned={setEditPinned}
+                categoryLabel={categoryLabel}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );

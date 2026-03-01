@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Camera, Loader2, Save } from "lucide-react";
+import AvatarCropDialog from "@/components/admin/AvatarCropDialog";
 
 export default function AdminProfilePage() {
   const { authFetch } = useAdmin();
@@ -26,6 +27,8 @@ export default function AdminProfilePage() {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("/avatar.png");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -72,24 +75,28 @@ export default function AdminProfilePage() {
     }
   };
 
-  const handleAvatarChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show preview immediately
     const reader = new FileReader();
     reader.onload = (ev) => {
-      setAvatarPreview(ev.target?.result as string);
+      setCropImageSrc(ev.target?.result as string);
+      setCropDialogOpen(true);
     };
     reader.readAsDataURL(file);
+    // Reset file input so same file can be selected again
+    e.target.value = "";
+  };
 
-    // Upload
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    setCropDialogOpen(false);
+    setAvatarPreview(URL.createObjectURL(croppedBlob));
     setUploading(true);
+
     try {
       const formData = new FormData();
-      formData.append("avatar", file);
+      formData.append("avatar", croppedBlob, "avatar.jpg");
 
       const res = await authFetch("/api/avatar", {
         method: "POST",
@@ -241,6 +248,13 @@ export default function AdminProfilePage() {
           </form>
         </CardContent>
       </Card>
+
+      <AvatarCropDialog
+        open={cropDialogOpen}
+        imageSrc={cropImageSrc}
+        onClose={() => setCropDialogOpen(false)}
+        onCropComplete={handleCropComplete}
+      />
     </div>
   );
 }

@@ -1,74 +1,38 @@
 {
   "profile": {
     "name": "Saway",
-    "username": "@saway",
-    "bio": "\u015e\u0131kl\u0131\u011f\u0131n Adresi",
-    "avatar": "/avatar.png"
+    "username": "@sawayjewelery",
+    "bio": "Hikayenize eşlik etmek için.",
+    "avatar": "/uploads/avatar.png"
   },
-  "theme": "default",
+  "theme": "sunset",
   "links": [
     {
-      "id": "website",
-      "title": "Web Sitemiz",
-      "url": "https://www.saway.com.tr",
-      "icon": "\ud83c\udf10",
-      "category": "social",
+      "id": "sale",
+      "title": "Tüm Ürünler",
+      "url": "https://saway.com.tr/collections/all",
+      "icon": "💰",
+      "category": "shop",
       "isPinned": true,
       "order": 0
     },
     {
-      "id": "instagram",
-      "title": "Instagram",
-      "url": "https://instagram.com/saway",
-      "icon": "\ud83d\udcf8",
+      "id": "website",
+      "title": "Web Sitemiz",
+      "url": "https://www.saway.com.tr",
+      "icon": "🌐",
       "category": "social",
       "isPinned": true,
       "order": 1
     },
     {
-      "id": "tiktok",
-      "title": "TikTok",
-      "url": "https://tiktok.com/@saway",
-      "icon": "\ud83c\udfb5",
+      "id": "instagram",
+      "title": "Instagram",
+      "url": "https://instagram.com/sawayjewelery",
+      "icon": "📸",
       "category": "social",
       "isPinned": true,
       "order": 2
-    },
-    {
-      "id": "twitter",
-      "title": "Twitter / X",
-      "url": "https://x.com/saway",
-      "icon": "\ud83d\udc26",
-      "category": "social",
-      "isPinned": false,
-      "order": 3
-    },
-    {
-      "id": "bestsellers",
-      "title": "\u00c7ok Satanlar",
-      "url": "https://www.saway.com.tr/cok-satanlar",
-      "icon": "\ud83d\udd25",
-      "category": "shop",
-      "isPinned": true,
-      "order": 4
-    },
-    {
-      "id": "newseason",
-      "title": "Yeni Sezon",
-      "url": "https://www.saway.com.tr/yeni-sezon",
-      "icon": "\ud83c\udd95",
-      "category": "shop",
-      "isPinned": false,
-      "order": 5
-    },
-    {
-      "id": "sale",
-      "title": "\u0130ndirimli \u00dcr\u00fcnler",
-      "url": "https://www.saway.com.tr/indirim",
-      "icon": "\ud83d\udcb0",
-      "category": "shop",
-      "isPinned": false,
-      "order": 6
     }
   ]
 }
