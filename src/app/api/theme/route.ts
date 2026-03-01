@@ -5,7 +5,7 @@ import { authenticateRequest } from "@/lib/auth";
 export async function GET() {
   try {
     const data = await getSiteData();
-    return NextResponse.json({ theme: data.theme });
+    return NextResponse.json({ theme: data.theme, customization: data.customization });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch theme" },
@@ -16,26 +16,23 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    const authenticated = await authenticateRequest(request);
-    if (!authenticated) {
+    const isAuth = await authenticateRequest(request);
+    if (!isAuth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { theme } = body;
+    const data = await getSiteData();
 
-    if (!theme || typeof theme !== "string") {
-      return NextResponse.json(
-        { error: "theme is required and must be a string" },
-        { status: 400 }
-      );
+    if (body.theme) {
+      data.theme = body.theme;
+    }
+    if (body.customization) {
+      data.customization = { ...data.customization, ...body.customization };
     }
 
-    const data = await getSiteData();
-    data.theme = theme;
     await saveSiteData(data);
-
-    return NextResponse.json({ theme: data.theme });
+    return NextResponse.json({ theme: data.theme, customization: data.customization });
   } catch {
     return NextResponse.json(
       { error: "Failed to update theme" },

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { getTheme } from "@/lib/themes";
-import type { Theme } from "@/lib/themes";
+import { buttonStyles, fontStyles, avatarShapes, defaultCustomization } from "@/lib/themes";
+import type { Theme, ThemeCustomization } from "@/lib/themes";
 
 interface LinkItem {
   id: string;
@@ -22,12 +23,14 @@ interface SiteData {
     avatar: string;
   };
   theme: string;
+  customization?: ThemeCustomization;
   links: LinkItem[];
 }
 
 export default function Home() {
   const [data, setData] = useState<SiteData | null>(null);
   const [theme, setTheme] = useState<Theme>(getTheme("midnight"));
+  const [customization, setCustomization] = useState<ThemeCustomization>(defaultCustomization);
 
   useEffect(() => {
     fetch("/api/site")
@@ -35,6 +38,7 @@ export default function Home() {
       .then((d: SiteData) => {
         setData(d);
         setTheme(getTheme(d.theme));
+        if (d.customization) setCustomization(d.customization);
       })
       .catch(console.error);
   }, []);
@@ -50,13 +54,17 @@ export default function Home() {
   const pinnedLinks = data.links.filter((l) => l.isPinned).sort((a, b) => a.order - b.order);
   const otherLinks = data.links.filter((l) => !l.isPinned).sort((a, b) => a.order - b.order);
 
+  const btnStyle = buttonStyles[customization.buttonStyle] || buttonStyles.rounded;
+  const fontClass = fontStyles[customization.fontStyle]?.class || "";
+  const avatarShape = avatarShapes[customization.avatarShape]?.class || "rounded-full";
+
   return (
-    <div className={`${theme.bodyClass} antialiased`}>
+    <div className={`${theme.bodyClass} ${fontClass} antialiased`}>
       <main className="mx-auto flex min-h-screen max-w-md flex-col items-center px-4 py-10">
         {/* Profile */}
         <div className="flex flex-col items-center text-center">
           <div className="relative">
-            <div className={`h-24 w-24 overflow-hidden rounded-full ${theme.avatarBorderClass} ${theme.avatarGradientClass}`}>
+            <div className={`h-24 w-24 overflow-hidden ${avatarShape} ${theme.avatarBorderClass} ${data.profile.avatar ? "" : theme.avatarGradientClass}`}>
               {data.profile.avatar ? (
                 <img
                   src={data.profile.avatar}
@@ -83,7 +91,7 @@ export default function Home() {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`group relative flex w-full items-center justify-center px-6 py-4 text-center font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${theme.cardClass} ${theme.cardPinnedClass}`}
+              className={`group relative flex w-full items-center justify-center px-6 py-4 text-center font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${theme.cardClass} ${theme.cardPinnedClass} ${btnStyle.class}`}
             >
               <span className="text-sm sm:text-base">{link.title}</span>
               <svg className={`absolute right-4 h-4 w-4 ${theme.cardHoverClass} opacity-0 transition-opacity group-hover:opacity-100`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -97,7 +105,7 @@ export default function Home() {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`group relative flex w-full items-center justify-center px-6 py-4 text-center font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${theme.cardClass}`}
+              className={`group relative flex w-full items-center justify-center px-6 py-4 text-center font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${theme.cardClass} ${btnStyle.class}`}
             >
               <span className="text-sm sm:text-base">{link.title}</span>
               <svg className={`absolute right-4 h-4 w-4 ${theme.cardHoverClass} opacity-0 transition-opacity group-hover:opacity-100`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -107,9 +115,11 @@ export default function Home() {
           ))}
         </div>
 
-        <footer className={`mt-12 pb-6 text-center text-xs ${theme.footerClass}`}>
-          <p>&copy; {new Date().getFullYear()} {data.profile.name}</p>
-        </footer>
+        {!customization.hideFooter && (
+          <footer className={`mt-12 pb-6 text-center text-xs ${theme.footerClass}`}>
+            <p>&copy; {new Date().getFullYear()} {data.profile.name}</p>
+          </footer>
+        )}
       </main>
     </div>
   );

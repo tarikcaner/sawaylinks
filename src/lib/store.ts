@@ -1,5 +1,7 @@
 import { readFile, writeFile, mkdir } from "fs/promises";
 import path from "path";
+import type { ThemeCustomization } from "./themes";
+import { defaultCustomization } from "./themes";
 
 export interface LinkItem {
   id: string;
@@ -19,6 +21,7 @@ export interface SiteData {
     avatar: string;
   };
   theme: string;
+  customization: ThemeCustomization;
   links: LinkItem[];
 }
 
@@ -33,6 +36,7 @@ const DEFAULT_DATA: SiteData = {
     avatar: "",
   },
   theme: "midnight",
+  customization: defaultCustomization,
   links: [
     {
       id: "website",

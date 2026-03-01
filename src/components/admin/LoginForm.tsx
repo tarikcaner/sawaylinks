@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,14 +16,63 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          setError("");
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const success = await onLogin(password);
-    if (!success) {
-      setError("Yanlis sifre. Tekrar deneyin.");
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 429) {
+        const seconds = data.retryAfter || 60;
+        setCountdown(seconds);
+        setError("Cok fazla deneme.");
+        setLoading(false);
+        return;
+      }
+
+      if (!res.ok) {
+        if (data.remaining !== undefined && data.remaining <= 2) {
+          setError(`Yanlis sifre. ${data.remaining} deneme hakkiniz kaldi.`);
+        } else {
+          setError("Yanlis sifre. Tekrar deneyin.");
+        }
+        setLoading(false);
+        return;
+      }
+
+      // Success - use onLogin to update parent state
+      localStorage.setItem("admin_token", data.token);
+      const success = await onLogin(password);
+      if (!success) {
+        // Fallback - reload to pick up the stored token
+        window.location.reload();
+      }
+    } catch {
+      setError("Baglanti hatasi.");
     }
     setLoading(false);
   };
@@ -63,15 +112,22 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               </div>
             </div>
 
-            {error && (
+            {countdown > 0 && (
+              <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error} {countdown} saniye bekleyin.</span>
+              </div>
+            )}
+
+            {error && countdown <= 0 && (
               <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading || !password}>
-              {loading ? "Giris yapiliyor..." : "Giris Yap"}
+            <Button type="submit" className="w-full" disabled={loading || !password || countdown > 0}>
+              {countdown > 0 ? `${countdown}s bekleyin` : loading ? "Giris yapiliyor..." : "Giris Yap"}
             </Button>
           </form>
         </CardContent>
