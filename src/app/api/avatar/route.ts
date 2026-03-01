@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, readFile } from "fs/promises";
 import path from "path";
 import { getSiteData, saveSiteData } from "@/lib/store";
 import { authenticateRequest } from "@/lib/auth";
@@ -11,6 +11,8 @@ const EXT_MAP: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
 };
+
+const AVATAR_DIR = path.join(process.cwd(), "data", "avatars");
 
 export async function POST(request: Request) {
   try {
@@ -45,13 +47,12 @@ export async function POST(request: Request) {
 
     const ext = EXT_MAP[file.type];
     const filename = `avatar.${ext}`;
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadsDir, { recursive: true });
+    await mkdir(AVATAR_DIR, { recursive: true });
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadsDir, filename), buffer);
+    await writeFile(path.join(AVATAR_DIR, filename), buffer);
 
-    const avatarUrl = `/uploads/${filename}`;
+    const avatarUrl = `/api/avatar/serve?v=${Date.now()}`;
 
     // Update site data with new avatar path
     const data = await getSiteData();
@@ -59,10 +60,36 @@ export async function POST(request: Request) {
     await saveSiteData(data);
 
     return NextResponse.json({ url: avatarUrl });
-  } catch {
+  } catch (err) {
+    console.error("[Avatar Upload Error]", err);
     return NextResponse.json(
       { error: "Failed to upload avatar" },
       { status: 500 }
     );
+  }
+}
+
+// GET: Serve the avatar image
+export async function GET() {
+  try {
+    const extensions = ["jpg", "png", "webp"];
+    for (const ext of extensions) {
+      try {
+        const filePath = path.join(AVATAR_DIR, `avatar.${ext}`);
+        const data = await readFile(filePath);
+        const contentType = ext === "jpg" ? "image/jpeg" : `image/${ext}`;
+        return new NextResponse(data, {
+          headers: {
+            "Content-Type": contentType,
+            "Cache-Control": "public, max-age=3600",
+          },
+        });
+      } catch {
+        continue;
+      }
+    }
+    return new NextResponse(null, { status: 404 });
+  } catch {
+    return new NextResponse(null, { status: 500 });
   }
 }

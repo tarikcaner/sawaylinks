@@ -18,6 +18,7 @@ public/uploads/*
 data/site.json
 data/analytics.json
 data/auth.json
+data/avatars/
 
 # misc
 .DS_Store

@@ -105,7 +105,6 @@ docker run -p 3000:3000 \
   -e ADMIN_PASSWORD=your-password \
   -e ADMIN_SECRET=your-random-secret-min-32-chars \
   -v sawaylinks-data:/app/data \
-  -v sawaylinks-uploads:/app/public/uploads \
   sawaylinks
 ```
 
@@ -126,12 +125,10 @@ services:
       - ADMIN_SECRET=your-random-secret-min-32-chars
     volumes:
       - sawaylinks-data:/app/data
-      - sawaylinks-uploads:/app/public/uploads
     restart: unless-stopped
 
 volumes:
   sawaylinks-data:
-  sawaylinks-uploads:
 ```
 
 Then run:
@@ -140,7 +137,7 @@ Then run:
 docker compose up -d
 ```
 
-> **Note:** The `data/` volume stores site data (`site.json`), analytics (`analytics.json`), and password hash (`auth.json`). Make sure to persist it across deployments.
+> **Note:** The `data/` volume stores all persistent data: site config, analytics, password hash, and uploaded avatars. Only one volume mount is needed.
 
 ### Coolify (Self-hosted PaaS)
 
@@ -149,9 +146,8 @@ docker compose up -d
 3. Add environment variables in the Coolify dashboard:
    - `ADMIN_PASSWORD` -- your admin password
    - `ADMIN_SECRET` -- a random string of 32+ characters
-4. Add **persistent storage** mounts:
-   - `/app/data` -- stores your site data (links, profile, theme, analytics, auth)
-   - `/app/public/uploads` -- stores uploaded avatar images
+4. Add **persistent storage** mount:
+   - `/app/data` -- stores all persistent data (links, profile, theme, analytics, auth, avatars)
 5. Set your domain (e.g., `links.yourdomain.com`).
 6. Click **Deploy**.
 
@@ -238,7 +234,7 @@ src/
 │   └── api/
 │       ├── site/             # Site data API
 │       ├── profile/          # Profile API
-│       ├── avatar/           # Avatar upload API
+│       ├── avatar/           # Avatar upload & serve API
 │       ├── auth/
 │       │   ├── login/        # Login with rate limiting
 │       │   ├── verify/       # Token verification
@@ -260,7 +256,8 @@ src/
 data/
 ├── site.json                 # Runtime data (auto-generated)
 ├── analytics.json            # Analytics data (auto-generated)
-└── auth.json                 # Hashed password (auto-generated)
+├── auth.json                 # Hashed password (auto-generated)
+└── avatars/                  # Uploaded avatar images
 ```
 
 ## Contributing
@@ -342,9 +339,8 @@ SawayLinks, ucuncu parti servis olmadan dahili analitik sunar:
 3. Coolify panelinde **ortam degiskenlerini** ekleyin:
    - `ADMIN_PASSWORD` -- yonetici sifreniz
    - `ADMIN_SECRET` -- en az 32 karakterlik rastgele bir dizi
-4. **Kalici depolama** baglama noktalarini ekleyin:
-   - `/app/data` -- site verilerini saklar (linkler, profil, tema, analitik, sifre)
-   - `/app/public/uploads` -- yuklenen avatar resimlerini saklar
+4. **Kalici depolama** baglama noktasi ekleyin:
+   - `/app/data` -- tum kalici verileri saklar (linkler, profil, tema, analitik, sifre, avatarlar)
 5. Alan adinizi ayarlayin (ornegin `links.alaniniz.com`).
 6. **Deploy** tusuna basin.
 

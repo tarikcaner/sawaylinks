@@ -20,7 +20,7 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-RUN mkdir -p /app/public/uploads /app/data && chown -R nextjs:nodejs /app/public/uploads /app/data
+RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
