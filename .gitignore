@@ -16,6 +16,8 @@ public/uploads/*
 
 # runtime data (auto-generated, keep data/ dir with .gitkeep)
 data/site.json
+data/analytics.json
+data/auth.json
 
 # misc
 .DS_Store

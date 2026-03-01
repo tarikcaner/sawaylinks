@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Sifre gerekli." }, { status: 400 });
     }
 
-    if (!verifyPassword(password)) {
+    if (!(await verifyPassword(password))) {
       return NextResponse.json(
         {
           error: "Yanlis sifre.",

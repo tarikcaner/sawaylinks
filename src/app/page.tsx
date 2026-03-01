@@ -41,6 +41,9 @@ export default function Home() {
         if (d.customization) setCustomization(d.customization);
       })
       .catch(console.error);
+
+    // Record page view (fire-and-forget)
+    fetch("/api/analytics/pageview", { method: "POST" }).catch(() => {});
   }, []);
 
   if (!data) {
@@ -57,6 +60,15 @@ export default function Home() {
   const btnStyle = buttonStyles[customization.buttonStyle] || buttonStyles.rounded;
   const fontClass = fontStyles[customization.fontStyle]?.class || "";
   const avatarShape = avatarShapes[customization.avatarShape]?.class || "rounded-full";
+
+  const trackClick = (linkId: string) => {
+    fetch("/api/analytics/click", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ linkId }),
+      keepalive: true,
+    }).catch(() => {});
+  };
 
   return (
     <div className={`${theme.bodyClass} ${fontClass} antialiased`}>
@@ -91,6 +103,7 @@ export default function Home() {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackClick(link.id)}
               className={`group relative flex w-full items-center justify-center px-6 py-4 text-center font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${theme.cardClass} ${theme.cardPinnedClass} ${btnStyle.class}`}
             >
               <span className="text-sm sm:text-base">{link.title}</span>
@@ -105,6 +118,7 @@ export default function Home() {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackClick(link.id)}
               className={`group relative flex w-full items-center justify-center px-6 py-4 text-center font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${theme.cardClass} ${btnStyle.class}`}
             >
               <span className="text-sm sm:text-base">{link.title}</span>

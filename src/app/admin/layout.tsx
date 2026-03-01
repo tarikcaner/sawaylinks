@@ -6,12 +6,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Link2, User, Palette, LogOut, Loader2 } from "lucide-react";
+import { Link2, User, Palette, BarChart3, LogOut, Loader2 } from "lucide-react";
 
 const navItems = [
   { href: "/admin", label: "Linkler", icon: Link2 },
   { href: "/admin/profile", label: "Profil", icon: User },
   { href: "/admin/theme", label: "Tema", icon: Palette },
+  { href: "/admin/analytics", label: "Analitik", icon: BarChart3 },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

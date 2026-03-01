@@ -1,3 +1,6 @@
+import { readFile, writeFile, mkdir } from "fs/promises";
+import path from "path";
+
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
 
@@ -8,6 +11,73 @@ if (!ADMIN_PASSWORD || !ADMIN_SECRET) {
 }
 
 const encoder = new TextEncoder();
+
+const DATA_DIR = path.join(process.cwd(), "data");
+const AUTH_FILE = path.join(DATA_DIR, "auth.json");
+
+// --- Password hashing with PBKDF2 ---
+
+async function hashPassword(password: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const hashBuffer = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    256
+  );
+  const saltHex = Array.from(salt).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const hashHex = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `${saltHex}:${hashHex}`;
+}
+
+async function verifyHash(password: string, stored: string): Promise<boolean> {
+  const [saltHex, hashHex] = stored.split(":");
+  if (!saltHex || !hashHex) return false;
+  const salt = new Uint8Array(saltHex.match(/.{2}/g)!.map((b) => parseInt(b, 16)));
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const hashBuffer = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    256
+  );
+  const computedHex = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  // Timing-safe comparison
+  if (computedHex.length !== hashHex.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < computedHex.length; i++) {
+    mismatch |= computedHex.charCodeAt(i) ^ hashHex.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
+async function getStoredPasswordHash(): Promise<string | null> {
+  try {
+    const raw = await readFile(AUTH_FILE, "utf-8");
+    const data = JSON.parse(raw);
+    return data.passwordHash || null;
+  } catch {
+    return null;
+  }
+}
+
+async function savePasswordHash(hash: string): Promise<void> {
+  await mkdir(DATA_DIR, { recursive: true });
+  await writeFile(AUTH_FILE, JSON.stringify({ passwordHash: hash }, null, 2), "utf-8");
+}
+
+// --- JWT helpers ---
 
 async function getKey(): Promise<CryptoKey> {
   if (!ADMIN_SECRET) throw new Error("ADMIN_SECRET is not configured");
@@ -41,7 +111,9 @@ function base64UrlDecode(str: string): Uint8Array {
   return bytes;
 }
 
-export function verifyPassword(password: string): boolean {
+// --- Exports ---
+
+function verifyEnvPassword(password: string): boolean {
   if (!ADMIN_PASSWORD) return false;
   if (password.length !== ADMIN_PASSWORD.length) return false;
   let mismatch = 0;
@@ -49,6 +121,24 @@ export function verifyPassword(password: string): boolean {
     mismatch |= password.charCodeAt(i) ^ ADMIN_PASSWORD.charCodeAt(i);
   }
   return mismatch === 0;
+}
+
+export async function verifyPassword(password: string): Promise<boolean> {
+  // First try stored hash (changed password)
+  const storedHash = await getStoredPasswordHash();
+  if (storedHash) {
+    return verifyHash(password, storedHash);
+  }
+  // Fallback to env var
+  return verifyEnvPassword(password);
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<boolean> {
+  const valid = await verifyPassword(currentPassword);
+  if (!valid) return false;
+  const hash = await hashPassword(newPassword);
+  await savePasswordHash(hash);
+  return true;
 }
 
 export async function createToken(): Promise<string> {

@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Camera, Loader2, Save } from "lucide-react";
+import { Camera, Loader2, Save, KeyRound } from "lucide-react";
 import AvatarCropDialog from "@/components/admin/AvatarCropDialog";
 
 export default function AdminProfilePage() {
@@ -33,6 +33,12 @@ export default function AdminProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // Password change state
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [changingPw, setChangingPw] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -241,6 +247,100 @@ export default function AdminProfilePage() {
                   <>
                     <Save className="size-4" />
                     Kaydet
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Sifre Degistir</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (newPw.length < 8) {
+                toast.error("Yeni sifre en az 8 karakter olmali.");
+                return;
+              }
+              if (newPw !== confirmPw) {
+                toast.error("Yeni sifreler eslesmiyor.");
+                return;
+              }
+              setChangingPw(true);
+              try {
+                const res = await authFetch("/api/auth/password", {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
+                });
+                if (res.ok) {
+                  toast.success("Sifre basariyla degistirildi!");
+                  setCurrentPw("");
+                  setNewPw("");
+                  setConfirmPw("");
+                } else {
+                  const data = await res.json();
+                  toast.error(data.error || "Sifre degistirilemedi.");
+                }
+              } catch {
+                toast.error("Bir hata olustu.");
+              } finally {
+                setChangingPw(false);
+              }
+            }}
+            className="space-y-5"
+          >
+            <div className="space-y-2">
+              <Label htmlFor="current-pw">Mevcut Sifre</Label>
+              <Input
+                id="current-pw"
+                type="password"
+                value={currentPw}
+                onChange={(e) => setCurrentPw(e.target.value)}
+                placeholder="Mevcut sifreniz"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-pw">Yeni Sifre</Label>
+              <Input
+                id="new-pw"
+                type="password"
+                value={newPw}
+                onChange={(e) => setNewPw(e.target.value)}
+                placeholder="En az 8 karakter"
+                minLength={8}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-pw">Yeni Sifre (Tekrar)</Label>
+              <Input
+                id="confirm-pw"
+                type="password"
+                value={confirmPw}
+                onChange={(e) => setConfirmPw(e.target.value)}
+                placeholder="Yeni sifrenizi tekrar girin"
+                required
+              />
+            </div>
+            <Separator />
+            <div className="flex justify-end">
+              <Button type="submit" size="sm" disabled={changingPw}>
+                {changingPw ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Degistiriliyor...
+                  </>
+                ) : (
+                  <>
+                    <KeyRound className="size-4" />
+                    Sifreyi Degistir
                   </>
                 )}
               </Button>

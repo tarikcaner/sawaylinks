@@ -3,28 +3,10 @@
     "name": "Saway",
     "username": "@sawayjewelery",
     "bio": "Hikayenize eşlik etmek için.",
-    "avatar": "/uploads/avatar.png"
+    "avatar": "/uploads/avatar.jpg"
   },
-  "theme": "sunset",
+  "theme": "midnight",
   "links": [
-    {
-      "id": "sale",
-      "title": "Tüm Ürünler",
-      "url": "https://saway.com.tr/collections/all",
-      "icon": "💰",
-      "category": "shop",
-      "isPinned": true,
-      "order": 0
-    },
-    {
-      "id": "website",
-      "title": "Web Sitemiz",
-      "url": "https://www.saway.com.tr",
-      "icon": "🌐",
-      "category": "social",
-      "isPinned": true,
-      "order": 1
-    },
     {
       "id": "instagram",
       "title": "Instagram",
@@ -32,7 +14,16 @@
       "icon": "📸",
       "category": "social",
       "isPinned": true,
-      "order": 2
+      "order": 0
+    },
+    {
+      "id": "sale",
+      "title": "Tüm Ürünler",
+      "url": "https://saway.com.tr/collections/all",
+      "icon": "💰",
+      "category": "shop",
+      "isPinned": true,
+      "order": 1
     }
   ]
 }
