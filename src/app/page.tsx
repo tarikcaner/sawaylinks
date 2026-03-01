@@ -51,7 +51,7 @@ export default function Home() {
   const otherLinks = data.links.filter((l) => !l.isPinned).sort((a, b) => a.order - b.order);
 
   return (
-    <body className={`${theme.bodyClass} antialiased`}>
+    <div className={`${theme.bodyClass} antialiased`}>
       <main className="mx-auto flex min-h-screen max-w-md flex-col items-center px-4 py-10">
         {/* Profile */}
         <div className="flex flex-col items-center text-center">
@@ -111,6 +111,6 @@ export default function Home() {
           <p>&copy; {new Date().getFullYear()} {data.profile.name}</p>
         </footer>
       </main>
-    </body>
+    </div>
   );
 }

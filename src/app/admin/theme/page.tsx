@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useAdmin } from "@/hooks/useAdmin";
+import { toast } from "sonner";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Check, Loader2, Save } from "lucide-react";
 
 const themes = [
   {
@@ -52,15 +57,6 @@ export default function AdminThemePage() {
   const [selectedTheme, setSelectedTheme] = useState("midnight");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
-
-  const showMessage = (type: "success" | "error", text: string) => {
-    setMessage({ type, text });
-    setTimeout(() => setMessage(null), 3000);
-  };
 
   useEffect(() => {
     const fetchTheme = async () => {
@@ -72,7 +68,7 @@ export default function AdminThemePage() {
           setSelectedTheme(data.theme);
         }
       } catch {
-        showMessage("error", "Tema yuklenemedi.");
+        toast.error("Tema yuklenemedi.");
       } finally {
         setLoading(false);
       }
@@ -90,12 +86,12 @@ export default function AdminThemePage() {
       });
       if (res.ok) {
         setCurrentTheme(selectedTheme);
-        showMessage("success", "Tema kaydedildi!");
+        toast.success("Tema kaydedildi!");
       } else {
-        showMessage("error", "Tema kaydedilemedi.");
+        toast.error("Tema kaydedilemedi.");
       }
     } catch {
-      showMessage("error", "Bir hata olustu.");
+      toast.error("Bir hata olustu.");
     } finally {
       setSaving(false);
     }
@@ -104,38 +100,32 @@ export default function AdminThemePage() {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Tema</h1>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Tema</h1>
         {selectedTheme !== currentTheme && (
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-all"
-          >
-            {saving ? "Kaydediliyor..." : "Kaydet"}
-          </button>
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Kaydediliyor...
+              </>
+            ) : (
+              <>
+                <Save className="size-4" />
+                Kaydet
+              </>
+            )}
+          </Button>
         )}
       </div>
-
-      {/* Toast message */}
-      {message && (
-        <div
-          className={`mb-4 px-4 py-2.5 rounded-lg text-sm ${
-            message.type === "success"
-              ? "bg-green-500/10 border border-green-500/20 text-green-400"
-              : "bg-red-500/10 border border-red-500/20 text-red-400"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {/* Theme grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -144,13 +134,13 @@ export default function AdminThemePage() {
           const isCurrent = currentTheme === theme.id;
 
           return (
-            <button
+            <Card
               key={theme.id}
               onClick={() => setSelectedTheme(theme.id)}
-              className={`relative text-left rounded-xl border-2 p-1 transition-all ${
+              className={`relative cursor-pointer p-1 transition-all ${
                 isSelected
-                  ? "border-purple-500 ring-2 ring-purple-500/20"
-                  : "border-white/10 hover:border-white/20"
+                  ? "ring-2 ring-primary border-primary"
+                  : "hover:border-ring/50"
               }`}
             >
               {/* Mini preview */}
@@ -165,9 +155,7 @@ export default function AdminThemePage() {
                 >
                   Saway
                 </div>
-                <div
-                  className={`text-[10px] ${theme.subtextColor}`}
-                >
+                <div className={`text-[10px] ${theme.subtextColor}`}>
                   @saway
                 </div>
                 {/* Card placeholders */}
@@ -185,41 +173,32 @@ export default function AdminThemePage() {
               </div>
 
               {/* Theme info */}
-              <div className="p-3">
+              <div className="px-3 py-3">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-medium text-white text-sm">
+                  <h3 className="font-medium text-sm">
                     {theme.name}
                   </h3>
                   {isCurrent && (
-                    <span className="text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded-full">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] px-1.5 py-0"
+                    >
                       Aktif
-                    </span>
+                    </Badge>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {theme.description}
                 </p>
               </div>
 
               {/* Selected check */}
               {isSelected && (
-                <div className="absolute top-3 right-3 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
-                  <svg
-                    className="w-3.5 h-3.5 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                <div className="absolute top-3 right-3 size-6 bg-primary rounded-full flex items-center justify-center">
+                  <Check className="size-3.5 text-primary-foreground" />
                 </div>
               )}
-            </button>
+            </Card>
           );
         })}
       </div>
