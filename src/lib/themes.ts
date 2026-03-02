@@ -19,6 +19,8 @@ export interface ThemeCustomization {
   fontStyle: "sans" | "serif" | "mono";
   avatarShape: "circle" | "square" | "rounded";
   hideFooter: boolean;
+  footerText: string;
+  language: "tr" | "en";
 }
 
 export const defaultCustomization: ThemeCustomization = {
@@ -26,6 +28,8 @@ export const defaultCustomization: ThemeCustomization = {
   fontStyle: "sans",
   avatarShape: "circle",
   hideFooter: false,
+  footerText: "",
+  language: "tr",
 };
 
 // Button style classes (applied to link cards)

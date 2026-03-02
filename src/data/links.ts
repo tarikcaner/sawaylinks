@@ -14,58 +14,40 @@ export interface Profile {
   avatar: string;
 }
 
+// Default example data — overridden by data/site.json at runtime
 export const profile: Profile = {
-  name: "Saway",
-  username: "@saway",
-  bio: "Şıklığın Adresi ✨",
-  avatar: "/avatar.png",
+  name: "My Brand",
+  username: "@mybrand",
+  bio: "Welcome to my links page",
+  avatar: "",
 };
 
 export const links: LinkItem[] = [
   {
     id: "website",
-    title: "🌐 Web Sitemiz",
-    url: "https://www.saway.com.tr",
+    title: "Website",
+    url: "https://example.com",
     category: "social",
     isPinned: true,
   },
   {
     id: "instagram",
-    title: "📸 Instagram",
-    url: "https://instagram.com/saway",
+    title: "Instagram",
+    url: "https://instagram.com",
     category: "social",
     isPinned: true,
   },
   {
     id: "tiktok",
-    title: "🎵 TikTok",
-    url: "https://tiktok.com/@saway",
+    title: "TikTok",
+    url: "https://tiktok.com",
     category: "social",
     isPinned: true,
   },
   {
     id: "twitter",
-    title: "🐦 Twitter / X",
-    url: "https://x.com/saway",
+    title: "Twitter / X",
+    url: "https://x.com",
     category: "social",
-  },
-  {
-    id: "bestsellers",
-    title: "🔥 Çok Satanlar",
-    url: "https://www.saway.com.tr/cok-satanlar",
-    category: "shop",
-    isPinned: true,
-  },
-  {
-    id: "newseason",
-    title: "🆕 Yeni Sezon",
-    url: "https://www.saway.com.tr/yeni-sezon",
-    category: "shop",
-  },
-  {
-    id: "sale",
-    title: "💰 İndirimli Ürünler",
-    url: "https://www.saway.com.tr/indirim",
-    category: "shop",
   },
 ];

@@ -131,7 +131,11 @@ export default function Home() {
 
         {!customization.hideFooter && (
           <footer className={`mt-12 pb-6 text-center text-xs ${theme.footerClass}`}>
-            <p>&copy; {new Date().getFullYear()} {data.profile.name}</p>
+            <p>
+              {customization.footerText
+                ? customization.footerText
+                : `\u00A9 ${new Date().getFullYear()} ${data.profile.name}`}
+            </p>
           </footer>
         )}
       </main>
