@@ -41,6 +41,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useT } from "@/contexts/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n";
 
 interface LinkItem {
   id: string;
@@ -74,6 +76,7 @@ interface SortableLinkCardProps {
   onSetEditCategory: (val: string) => void;
   onSetEditPinned: (val: boolean) => void;
   categoryLabel: (cat?: string) => string;
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }
 
 function SortableLinkCard({
@@ -98,6 +101,7 @@ function SortableLinkCard({
   onSetEditCategory,
   onSetEditPinned,
   categoryLabel,
+  t,
 }: SortableLinkCardProps) {
   const {
     attributes,
@@ -129,7 +133,7 @@ function SortableLinkCard({
                   type="text"
                   value={editTitle}
                   onChange={(e) => onSetEditTitle(e.target.value)}
-                  placeholder="Baslik"
+                  placeholder={t("links.title")}
                 />
                 <Input
                   type="url"
@@ -144,9 +148,9 @@ function SortableLinkCard({
                   onChange={(e) => onSetEditCategory(e.target.value)}
                   className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] dark:bg-input/30"
                 >
-                  <option value="social">Sosyal Medya</option>
-                  <option value="shop">Magaza</option>
-                  <option value="other">Diger</option>
+                  <option value="social">{t("links.categorySocial")}</option>
+                  <option value="shop">{t("links.categoryShop")}</option>
+                  <option value="other">{t("links.categoryOther")}</option>
                 </select>
                 <div className="flex items-center gap-2">
                   <Switch
@@ -158,7 +162,7 @@ function SortableLinkCard({
                     htmlFor={`edit-pinned-${link.id}`}
                     className="cursor-pointer"
                   >
-                    Sabitlensin
+                    {t("links.pinned")}
                   </Label>
                 </div>
               </div>
@@ -170,14 +174,14 @@ function SortableLinkCard({
                   onClick={onCancelEdit}
                 >
                   <X className="size-4" />
-                  Vazgec
+                  {t("links.cancel")}
                 </Button>
                 <Button
                   size="sm"
                   onClick={() => onSaveEdit(link.id)}
                 >
                   <Check className="size-4" />
-                  Kaydet
+                  {t("links.save")}
                 </Button>
               </div>
             </div>
@@ -190,7 +194,7 @@ function SortableLinkCard({
                   {...attributes}
                   {...listeners}
                   className="cursor-grab active:cursor-grabbing touch-none p-0.5 rounded hover:bg-muted"
-                  aria-label="Surukle"
+                  aria-label={t("links.drag")}
                 >
                   <GripVertical className="size-4 text-muted-foreground/50" />
                 </button>
@@ -200,7 +204,7 @@ function SortableLinkCard({
                     size="icon-xs"
                     onClick={() => onMoveLink(index, "up")}
                     disabled={index === 0}
-                    title="Yukari tasi"
+                    title={t("links.moveUp")}
                   >
                     <ChevronUp className="size-3" />
                   </Button>
@@ -209,7 +213,7 @@ function SortableLinkCard({
                     size="icon-xs"
                     onClick={() => onMoveLink(index, "down")}
                     disabled={index === linksCount - 1}
-                    title="Asagi tasi"
+                    title={t("links.moveDown")}
                   >
                     <ChevronDown className="size-3" />
                   </Button>
@@ -228,7 +232,7 @@ function SortableLinkCard({
                       className="text-[10px] px-1.5 py-0"
                     >
                       <Pin className="size-2.5" />
-                      Sabit
+                      {t("links.pinnedBadge")}
                     </Badge>
                   )}
                   {link.category && (
@@ -255,7 +259,7 @@ function SortableLinkCard({
                   size="icon-xs"
                   onClick={() => onTogglePin(link)}
                   title={
-                    link.isPinned ? "Sabitlemeyi kaldir" : "Sabitle"
+                    link.isPinned ? t("links.unpin") : t("links.pin")
                   }
                   className={
                     link.isPinned
@@ -272,7 +276,7 @@ function SortableLinkCard({
                   variant="ghost"
                   size="icon-xs"
                   onClick={() => onStartEdit(link)}
-                  title="Duzenle"
+                  title={t("links.edit")}
                 >
                   <Pencil className="size-3.5" />
                 </Button>
@@ -284,14 +288,14 @@ function SortableLinkCard({
                       size="xs"
                       onClick={() => onDeleteLink(link.id)}
                     >
-                      Sil
+                      {t("links.delete")}
                     </Button>
                     <Button
                       variant="ghost"
                       size="xs"
                       onClick={() => onSetDeletingId(null)}
                     >
-                      Iptal
+                      {t("links.deleteCancel")}
                     </Button>
                   </div>
                 ) : (
@@ -299,7 +303,7 @@ function SortableLinkCard({
                     variant="ghost"
                     size="icon-xs"
                     onClick={() => onSetDeletingId(link.id)}
-                    title="Sil"
+                    title={t("links.delete")}
                     className="hover:text-destructive"
                   >
                     <Trash2 className="size-3.5" />
@@ -316,6 +320,7 @@ function SortableLinkCard({
 
 export default function AdminLinksPage() {
   const { authFetch } = useAdmin();
+  const t = useT();
   const [links, setLinks] = useState<LinkItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -359,11 +364,11 @@ export default function AdminLinksPage() {
       );
       setLinks(sorted);
     } catch {
-      toast.error("Linkler yuklenemedi.");
+      toast.error(t("toast.links.loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchLinks();
@@ -384,7 +389,7 @@ export default function AdminLinksPage() {
         }),
       });
       if (res.ok) {
-        toast.success("Link eklendi!");
+        toast.success(t("toast.links.added"));
         setFormTitle("");
         setFormUrl("");
         setFormCategory("social");
@@ -392,10 +397,10 @@ export default function AdminLinksPage() {
         setShowForm(false);
         await fetchLinks();
       } else {
-        toast.error("Link eklenemedi.");
+        toast.error(t("toast.links.addFailed"));
       }
     } catch {
-      toast.error("Bir hata olustu.");
+      toast.error(t("toast.error"));
     } finally {
       setFormSubmitting(false);
     }
@@ -426,14 +431,14 @@ export default function AdminLinksPage() {
         }),
       });
       if (res.ok) {
-        toast.success("Link guncellendi!");
+        toast.success(t("toast.links.updated"));
         setEditingId(null);
         await fetchLinks();
       } else {
-        toast.error("Guncelleme basarisiz.");
+        toast.error(t("toast.links.updateFailed"));
       }
     } catch {
-      toast.error("Bir hata olustu.");
+      toast.error(t("toast.error"));
     }
   };
 
@@ -448,7 +453,7 @@ export default function AdminLinksPage() {
         await fetchLinks();
       }
     } catch {
-      toast.error("Bir hata olustu.");
+      toast.error(t("toast.error"));
     }
   };
 
@@ -458,14 +463,14 @@ export default function AdminLinksPage() {
         method: "DELETE",
       });
       if (res.ok) {
-        toast.success("Link silindi!");
+        toast.success(t("toast.links.deleted"));
         setDeletingId(null);
         await fetchLinks();
       } else {
-        toast.error("Silme basarisiz.");
+        toast.error(t("toast.links.deleteFailed"));
       }
     } catch {
-      toast.error("Bir hata olustu.");
+      toast.error(t("toast.error"));
     }
   };
 
@@ -489,7 +494,7 @@ export default function AdminLinksPage() {
         body: JSON.stringify({ ids }),
       });
     } catch {
-      toast.error("Siralama guncellenemedi.");
+      toast.error(t("toast.links.reorderFailed"));
       await fetchLinks();
     }
   };
@@ -512,7 +517,7 @@ export default function AdminLinksPage() {
         body: JSON.stringify({ ids }),
       });
     } catch {
-      toast.error("Siralama guncellenemedi.");
+      toast.error(t("toast.links.reorderFailed"));
       await fetchLinks();
     }
   };
@@ -520,11 +525,11 @@ export default function AdminLinksPage() {
   const categoryLabel = (cat?: string) => {
     switch (cat) {
       case "social":
-        return "Sosyal";
+        return t("links.categoryLabelSocial");
       case "shop":
-        return "Magaza";
+        return t("links.categoryLabelShop");
       default:
-        return "Diger";
+        return t("links.categoryLabelOther");
     }
   };
 
@@ -540,7 +545,7 @@ export default function AdminLinksPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Linkler</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("links.heading")}</h1>
         <Button
           onClick={() => setShowForm(!showForm)}
           variant={showForm ? "outline" : "default"}
@@ -549,12 +554,12 @@ export default function AdminLinksPage() {
           {showForm ? (
             <>
               <X className="size-4" />
-              Vazgec
+              {t("links.cancel")}
             </>
           ) : (
             <>
               <Plus className="size-4" />
-              Yeni Link Ekle
+              {t("links.addNew")}
             </>
           )}
         </Button>
@@ -564,22 +569,22 @@ export default function AdminLinksPage() {
       {showForm && (
         <Card className="border-dashed">
           <CardContent>
-            <h2 className="text-base font-semibold mb-4">Yeni Link</h2>
+            <h2 className="text-base font-semibold mb-4">{t("links.newLink")}</h2>
             <form onSubmit={handleAddLink} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="form-title">Baslik</Label>
+                  <Label htmlFor="form-title">{t("links.title")}</Label>
                   <Input
                     id="form-title"
                     type="text"
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
-                    placeholder="Link basligi"
+                    placeholder={t("links.titlePlaceholder")}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="form-url">URL</Label>
+                  <Label htmlFor="form-url">{t("links.url")}</Label>
                   <Input
                     id="form-url"
                     type="url"
@@ -592,16 +597,16 @@ export default function AdminLinksPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="form-category">Kategori</Label>
+                  <Label htmlFor="form-category">{t("links.category")}</Label>
                   <select
                     id="form-category"
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
                     className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] dark:bg-input/30"
                   >
-                    <option value="social">Sosyal Medya</option>
-                    <option value="shop">Magaza</option>
-                    <option value="other">Diger</option>
+                    <option value="social">{t("links.categorySocial")}</option>
+                    <option value="shop">{t("links.categoryShop")}</option>
+                    <option value="other">{t("links.categoryOther")}</option>
                   </select>
                 </div>
                 <div className="flex items-end pb-1">
@@ -612,7 +617,7 @@ export default function AdminLinksPage() {
                       onCheckedChange={setFormPinned}
                     />
                     <Label htmlFor="form-pinned" className="cursor-pointer">
-                      Sabitlensin
+                      {t("links.pinned")}
                     </Label>
                   </div>
                 </div>
@@ -623,12 +628,12 @@ export default function AdminLinksPage() {
                   {formSubmitting ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      Ekleniyor...
+                      {t("links.adding")}
                     </>
                   ) : (
                     <>
                       <Plus className="size-4" />
-                      Ekle
+                      {t("links.add")}
                     </>
                   )}
                 </Button>
@@ -642,7 +647,7 @@ export default function AdminLinksPage() {
       <div className="space-y-2">
         {links.length === 0 && (
           <div className="text-center text-muted-foreground py-16">
-            <p className="text-sm">Henuz link eklenmemis.</p>
+            <p className="text-sm">{t("links.empty")}</p>
           </div>
         )}
 
@@ -679,6 +684,7 @@ export default function AdminLinksPage() {
                 onSetEditCategory={setEditCategory}
                 onSetEditPinned={setEditPinned}
                 categoryLabel={categoryLabel}
+                t={t}
               />
             ))}
           </SortableContext>

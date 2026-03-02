@@ -6,14 +6,63 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Link2, User, Palette, BarChart3, LogOut, Loader2 } from "lucide-react";
+import { Link2, User, Palette, BarChart3, LogOut, Loader2, Languages } from "lucide-react";
+import { LanguageProvider, useT, useLang } from "@/contexts/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n";
 
-const navItems = [
-  { href: "/admin", label: "Linkler", icon: Link2 },
-  { href: "/admin/profile", label: "Profil", icon: User },
-  { href: "/admin/theme", label: "Tema", icon: Palette },
-  { href: "/admin/analytics", label: "Analitik", icon: BarChart3 },
+const navItems: { href: string; labelKey: TranslationKey; icon: typeof Link2 }[] = [
+  { href: "/admin", labelKey: "nav.links", icon: Link2 },
+  { href: "/admin/profile", labelKey: "nav.profile", icon: User },
+  { href: "/admin/theme", labelKey: "nav.theme", icon: Palette },
+  { href: "/admin/analytics", labelKey: "nav.analytics", icon: BarChart3 },
 ];
+
+function AdminHeader({ logout }: { logout: () => void }) {
+  const t = useT();
+  const { lang, setLang } = useLang();
+  const pathname = usePathname();
+
+  return (
+    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
+      <div className="mx-auto max-w-3xl flex items-center justify-between h-14 px-4">
+        <Link href="/admin" className="text-sm font-semibold tracking-tight">
+          SawayLinks
+        </Link>
+
+        <nav className="flex items-center gap-1">
+          {navItems.map((item) => {
+            const isActive = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+            const Icon = item.icon;
+            return (
+              <Link key={item.href} href={item.href}>
+                <Button variant={isActive ? "secondary" : "ghost"} size="sm" className="gap-2 h-8 text-xs">
+                  <Icon className="h-3.5 w-3.5" />
+                  {t(item.labelKey)}
+                </Button>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setLang(lang === "tr" ? "en" : "tr")}
+            className="gap-1.5 h-8 text-xs text-muted-foreground"
+          >
+            <Languages className="h-3.5 w-3.5" />
+            {t("lang.toggle")}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={logout} className="gap-2 h-8 text-xs text-muted-foreground hover:text-destructive">
+            <LogOut className="h-3.5 w-3.5" />
+            {t("nav.logout")}
+          </Button>
+        </div>
+      </div>
+    </header>
+  );
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, login, logout } = useAdmin();
@@ -28,43 +77,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   if (!isAuthenticated) {
-    return <LoginForm onLogin={login} />;
+    return (
+      <LanguageProvider>
+        <LoginForm onLogin={login} />
+      </LanguageProvider>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top bar */}
-      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-3xl flex items-center justify-between h-14 px-4">
-          <Link href="/admin" className="text-sm font-semibold tracking-tight">
-            SawayLinks
-          </Link>
-
-          <nav className="flex items-center gap-1">
-            {navItems.map((item) => {
-              const isActive = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
-              const Icon = item.icon;
-              return (
-                <Link key={item.href} href={item.href}>
-                  <Button variant={isActive ? "secondary" : "ghost"} size="sm" className="gap-2 h-8 text-xs">
-                    <Icon className="h-3.5 w-3.5" />
-                    {item.label}
-                  </Button>
-                </Link>
-              );
-            })}
-          </nav>
-
-          <Button variant="ghost" size="sm" onClick={logout} className="gap-2 h-8 text-xs text-muted-foreground hover:text-destructive">
-            <LogOut className="h-3.5 w-3.5" />
-            Cikis
-          </Button>
-        </div>
-      </header>
-
-      <Separator />
-
-      <main className="mx-auto max-w-3xl px-4 py-8">{children}</main>
-    </div>
+    <LanguageProvider>
+      <div className="min-h-screen bg-background">
+        <AdminHeader logout={logout} />
+        <Separator />
+        <main className="mx-auto max-w-3xl px-4 py-8">{children}</main>
+      </div>
+    </LanguageProvider>
   );
 }

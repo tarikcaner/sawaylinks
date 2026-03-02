@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Loader2, ZoomIn } from "lucide-react";
+import { useT } from "@/contexts/LanguageContext";
 
 interface AvatarCropDialogProps {
   open: boolean;
@@ -66,6 +67,7 @@ export default function AvatarCropDialog({
   onClose,
   onCropComplete,
 }: AvatarCropDialogProps) {
+  const t = useT();
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
@@ -100,7 +102,7 @@ export default function AvatarCropDialog({
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Fotografi Kirp</DialogTitle>
+          <DialogTitle>{t("crop.title")}</DialogTitle>
         </DialogHeader>
 
         <div className="relative w-full aspect-square bg-black rounded-lg overflow-hidden">
@@ -134,16 +136,16 @@ export default function AvatarCropDialog({
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose} disabled={processing}>
-            Iptal
+            {t("crop.cancel")}
           </Button>
           <Button onClick={handleCrop} disabled={processing}>
             {processing ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Isleniyor...
+                {t("crop.processing")}
               </>
             ) : (
-              "Kirp ve Yukle"
+              t("crop.confirm")
             )}
           </Button>
         </DialogFooter>

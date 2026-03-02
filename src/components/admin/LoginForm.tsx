@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { useT } from "@/contexts/LanguageContext";
 
 interface LoginFormProps {
   onLogin: (password: string) => Promise<boolean>;
 }
 
 export default function LoginForm({ onLogin }: LoginFormProps) {
+  const t = useT();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,16 +51,16 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
       if (res.status === 429) {
         const seconds = data.retryAfter || 60;
         setCountdown(seconds);
-        setError("Cok fazla deneme.");
+        setError(t("login.tooMany"));
         setLoading(false);
         return;
       }
 
       if (!res.ok) {
         if (data.remaining !== undefined && data.remaining <= 2) {
-          setError(`Yanlis sifre. ${data.remaining} deneme hakkiniz kaldi.`);
+          setError(t("login.attemptsLeft", { n: data.remaining }));
         } else {
-          setError("Yanlis sifre. Tekrar deneyin.");
+          setError(t("login.wrongPassword"));
         }
         setLoading(false);
         return;
@@ -72,7 +74,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
         window.location.reload();
       }
     } catch {
-      setError("Baglanti hatasi.");
+      setError(t("login.connectionError"));
     }
     setLoading(false);
   };
@@ -84,20 +86,20 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Lock className="h-6 w-6" />
           </div>
-          <CardTitle className="text-xl">Admin Panel</CardTitle>
-          <CardDescription>Yonetim paneline erisim icin sifrenizi girin</CardDescription>
+          <CardTitle className="text-xl">{t("login.title")}</CardTitle>
+          <CardDescription>{t("login.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">Sifre</Label>
+              <Label htmlFor="password">{t("login.password")}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Admin sifresi"
+                  placeholder={t("login.passwordPlaceholder")}
                   autoFocus
                   className="pr-10"
                 />
@@ -115,7 +117,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
             {countdown > 0 && (
               <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{error} {countdown} saniye bekleyin.</span>
+                <span>{error} {t("login.waitSeconds", { n: countdown })}</span>
               </div>
             )}
 
@@ -127,7 +129,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
             )}
 
             <Button type="submit" className="w-full" disabled={loading || !password || countdown > 0}>
-              {countdown > 0 ? `${countdown}s bekleyin` : loading ? "Giris yapiliyor..." : "Giris Yap"}
+              {countdown > 0 ? t("login.cooldown", { n: countdown }) : loading ? t("login.loading") : t("login.submit")}
             </Button>
           </form>
         </CardContent>

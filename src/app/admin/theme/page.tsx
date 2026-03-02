@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { Check, Loader2, Save, Smartphone, Settings2 } from "lucide-react";
 import {
   themes as themeConfigs,
@@ -20,6 +21,7 @@ import {
   type Theme,
   type ThemeCustomization,
 } from "@/lib/themes";
+import { useT } from "@/contexts/LanguageContext";
 
 interface SiteProfile {
   name: string;
@@ -115,7 +117,9 @@ function PhonePreview({
             {/* Footer */}
             {!customization.hideFooter && (
               <div className={`mt-6 text-center text-[9px] ${theme.footerClass}`}>
-                &copy; 2024 {profile.name || "My Brand"}
+                {customization.footerText
+                  ? customization.footerText
+                  : `\u00A9 ${new Date().getFullYear()} ${profile.name || "My Brand"}`}
               </div>
             )}
           </div>
@@ -141,6 +145,7 @@ const themePreviews: Record<string, { bg: string; cardBg: string; cardBorder: st
 
 export default function AdminThemePage() {
   const { authFetch } = useAdmin();
+  const t = useT();
   const [currentTheme, setCurrentTheme] = useState("midnight");
   const [selectedTheme, setSelectedTheme] = useState("midnight");
   const [customization, setCustomization] = useState<ThemeCustomization>(defaultCustomization);
@@ -176,13 +181,13 @@ export default function AdminThemePage() {
           setLinks(siteData.links);
         }
       } catch {
-        toast.error("Tema yuklenemedi.");
+        toast.error(t("toast.theme.loadFailed"));
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [t]);
 
   const hasChanges =
     selectedTheme !== currentTheme ||
@@ -199,12 +204,12 @@ export default function AdminThemePage() {
       if (res.ok) {
         setCurrentTheme(selectedTheme);
         setSavedCustomization(customization);
-        toast.success("Tema kaydedildi!");
+        toast.success(t("toast.theme.saved"));
       } else {
-        toast.error("Tema kaydedilemedi.");
+        toast.error(t("toast.theme.saveFailed"));
       }
     } catch {
-      toast.error("Bir hata olustu.");
+      toast.error(t("toast.error"));
     } finally {
       setSaving(false);
     }
@@ -224,7 +229,7 @@ export default function AdminThemePage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Tema</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("theme.heading")}</h1>
         <div className="flex items-center gap-2">
           {/* Mobile tab toggle */}
           <div className="flex sm:hidden">
@@ -248,12 +253,12 @@ export default function AdminThemePage() {
               {saving ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Kaydediliyor...
+                  {t("theme.saving")}
                 </>
               ) : (
                 <>
                   <Save className="size-4" />
-                  Kaydet
+                  {t("theme.save")}
                 </>
               )}
             </Button>
@@ -266,7 +271,7 @@ export default function AdminThemePage() {
         <div className={`flex-1 space-y-6 ${mobileTab === "preview" ? "hidden sm:block" : ""}`}>
           {/* Theme grid */}
           <div>
-            <h2 className="text-sm font-medium text-muted-foreground mb-3">Sablonlar</h2>
+            <h2 className="text-sm font-medium text-muted-foreground mb-3">{t("theme.templates")}</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {themeList.map((theme) => {
                 const isSelected = selectedTheme === theme.id;
@@ -294,7 +299,7 @@ export default function AdminThemePage() {
                       <div className="flex items-center gap-1">
                         <span className="font-medium text-[11px]">{theme.name}</span>
                         {isCurrent && (
-                          <Badge variant="secondary" className="text-[8px] px-1 py-0 h-3.5">Aktif</Badge>
+                          <Badge variant="secondary" className="text-[8px] px-1 py-0 h-3.5">{t("theme.active")}</Badge>
                         )}
                       </div>
                     </div>
@@ -313,11 +318,11 @@ export default function AdminThemePage() {
 
           {/* Customization options */}
           <div className="space-y-5">
-            <h2 className="text-sm font-medium text-muted-foreground">Ozellestirme</h2>
+            <h2 className="text-sm font-medium text-muted-foreground">{t("theme.customization")}</h2>
 
             {/* Button Style */}
             <div className="space-y-2">
-              <Label className="text-xs">Buton Stili</Label>
+              <Label className="text-xs">{t("theme.buttonStyle")}</Label>
               <div className="grid grid-cols-4 gap-2">
                 {Object.entries(buttonStyles).map(([key, style]) => (
                   <button
@@ -337,7 +342,7 @@ export default function AdminThemePage() {
 
             {/* Font Style */}
             <div className="space-y-2">
-              <Label className="text-xs">Yazi Tipi</Label>
+              <Label className="text-xs">{t("theme.fontStyle")}</Label>
               <div className="grid grid-cols-3 gap-2">
                 {Object.entries(fontStyles).map(([key, style]) => (
                   <button
@@ -357,7 +362,7 @@ export default function AdminThemePage() {
 
             {/* Avatar Shape */}
             <div className="space-y-2">
-              <Label className="text-xs">Avatar Sekli</Label>
+              <Label className="text-xs">{t("theme.avatarShape")}</Label>
               <div className="grid grid-cols-3 gap-2">
                 {Object.entries(avatarShapes).map(([key, shape]) => (
                   <button
@@ -376,21 +381,44 @@ export default function AdminThemePage() {
               </div>
             </div>
 
+            <Separator />
+
+            {/* Footer Section */}
+            <h2 className="text-sm font-medium text-muted-foreground">{t("theme.footer")}</h2>
+
             {/* Hide Footer */}
             <div className="flex items-center justify-between">
-              <Label htmlFor="hide-footer" className="text-xs cursor-pointer">Footer&apos;i gizle</Label>
+              <Label htmlFor="hide-footer" className="text-xs cursor-pointer">{t("theme.hideFooter")}</Label>
               <Switch
                 id="hide-footer"
                 checked={customization.hideFooter}
                 onCheckedChange={(checked) => setCustomization((c) => ({ ...c, hideFooter: checked }))}
               />
             </div>
+
+            {/* Footer Text */}
+            {!customization.hideFooter && (
+              <div className="space-y-2">
+                <Label htmlFor="footer-text" className="text-xs">{t("theme.footerText")}</Label>
+                <Textarea
+                  id="footer-text"
+                  value={customization.footerText || ""}
+                  onChange={(e) => setCustomization((c) => ({ ...c, footerText: e.target.value }))}
+                  placeholder={`© ${new Date().getFullYear()} ${profile.name || "Brand"}`}
+                  rows={2}
+                  className="text-xs resize-none"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  {t("theme.footerHint")}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Right: Phone Preview (sticky on desktop, tab on mobile) */}
         <div className={`sm:sticky sm:top-20 sm:self-start ${mobileTab === "themes" ? "hidden sm:block" : ""}`}>
-          <h2 className="text-sm font-medium text-muted-foreground mb-3 text-center">Onizleme</h2>
+          <h2 className="text-sm font-medium text-muted-foreground mb-3 text-center">{t("theme.preview")}</h2>
           <PhonePreview
             theme={activeTheme}
             customization={customization}
