@@ -24,39 +24,39 @@ function AdminHeader({ logout }: { logout: () => void }) {
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
-      <div className="mx-auto max-w-3xl flex items-center justify-between h-14 px-4">
-        <Link href="/admin" className="text-sm font-semibold tracking-tight">
+      <div className="mx-auto max-w-3xl flex items-center justify-between h-14 px-2 sm:px-4">
+        <Link href="/admin" className="text-sm font-semibold tracking-tight shrink-0">
           SawayLinks
         </Link>
 
-        <nav className="flex items-center gap-1">
+        <nav className="flex items-center gap-0.5 sm:gap-1">
           {navItems.map((item) => {
             const isActive = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
             const Icon = item.icon;
             return (
               <Link key={item.href} href={item.href}>
-                <Button variant={isActive ? "secondary" : "ghost"} size="sm" className="gap-2 h-8 text-xs">
+                <Button variant={isActive ? "secondary" : "ghost"} size="sm" className="gap-1.5 h-8 text-xs px-2 sm:px-3">
                   <Icon className="h-3.5 w-3.5" />
-                  {t(item.labelKey)}
+                  <span className="hidden sm:inline">{t(item.labelKey)}</span>
                 </Button>
               </Link>
             );
           })}
         </nav>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setLang(lang === "tr" ? "en" : "tr")}
-            className="gap-1.5 h-8 text-xs text-muted-foreground"
+            className="gap-1 h-8 text-xs text-muted-foreground px-2 sm:px-3"
           >
             <Languages className="h-3.5 w-3.5" />
             {t("lang.toggle")}
           </Button>
-          <Button variant="ghost" size="sm" onClick={logout} className="gap-2 h-8 text-xs text-muted-foreground hover:text-destructive">
+          <Button variant="ghost" size="sm" onClick={logout} className="gap-1.5 h-8 text-xs text-muted-foreground hover:text-destructive px-2 sm:px-3">
             <LogOut className="h-3.5 w-3.5" />
-            {t("nav.logout")}
+            <span className="hidden sm:inline">{t("nav.logout")}</span>
           </Button>
         </div>
       </div>
